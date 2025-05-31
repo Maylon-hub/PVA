@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apostas Malucas do Papai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .room-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+        .stats-display {
+            display: flex;
+            gap: 20px;
+        }
+        .stat-item {
+            background-color: #f9f9f9;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-item span {
+            font-weight: bold;
+            color: #222;
+        }
+        .room-content {
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .room-actions button, .qte-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .room-actions button:hover, .qte-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+        .room-actions button:active, .qte-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .room-actions button:disabled, .qte-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .qte-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            border: 2px dashed #99d9ff;
+            text-align: center;
+        }
+        .qte-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        .message-box button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .family-status {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+        .game-over-screen button {
+            margin-top: 20px;
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background-color 0.3s ease;
+        }
+        .game-over-screen button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="game-container bg-white rounded-xl shadow-lg p-6 max-w-2xl w-full">
+        <div class="header-bar flex justify-between items-center pb-4 border-b border-gray-200">
+            <div class="stats-display flex gap-4">
+                <div class="stat-item bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600">
+                    💰 Dinheiro: <span id="moneyDisplay" class="font-bold text-gray-900">R$ 0</span>
+                </div>
+                <div class="stat-item bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600">
+                    🤫 Suspeita: <span id="suspicionDisplay" class="font-bold text-gray-900">0%</span>
+                </div>
+            </div>
+            <div id="currentRoom" class="room-display text-2xl font-bold text-gray-800">Sala de Estar</div>
+        </div>
+
+        <div class="room-content flex flex-col gap-4">
+            <div id="roomDescription" class="text-gray-700 text-base">
+                Você está na sala de estar. A TV está ligada, mas ninguém está assistindo. Um bom lugar para começar a procurar.
+            </div>
+
+            <div id="familyStatus" class="family-status">
+                Ninguém por perto... por enquanto.
+            </div>
+
+            <div id="itemActions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+
+            <div id="qteArea" class="qte-container hidden">
+                <p class="text-lg font-semibold text-blue-700">Rápido! Clique no botão!</p>
+                <div id="qteTimer" class="qte-timer text-blue-500">Tempo: 3s</div>
+                <button id="qteButton" class="qte-button bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md">
+                    CLIQUE AQUI!
+                </button>
+            </div>
+        </div>
+
+        <div id="navigationButtons" class="flex flex-wrap justify-center gap-4 pt-4 border-t border-gray-200">
+            </div>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button id="messageOkButton">OK</button>
+    </div>
+
+    <div id="gameOverScreen" class="game-over-screen">
+        <p id="gameOverMessage"></p>
+        <button id="restartButton">Tentar Novamente</button>
+    </div>
+
+    <script>
+        // Variáveis globais para Firebase (serão preenchidas pelo ambiente Canvas)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- Variáveis de Jogo ---
+        let money = 0;
+        let suspicion = 0;
+        const MAX_SUSPICION = 100;
+        let currentRoom = 'livingRoom';
+        let isQTEActive = false;
+        let qteTimeout;
+        let qteInterval;
+
+        // --- Elementos do DOM ---
+        const moneyDisplay = document.getElementById('moneyDisplay');
+        const suspicionDisplay = document.getElementById('suspicionDisplay');
+        const currentRoomDisplay = document.getElementById('currentRoom');
+        const roomDescription = document.getElementById('roomDescription');
+        const familyStatusDisplay = document.getElementById('familyStatus');
+        const itemActionsDiv = document.getElementById('itemActions');
+        const qteArea = document.getElementById('qteArea');
+        const qteTimerDisplay = document.getElementById('qteTimer');
+        const qteButton = document.getElementById('qteButton');
+        const navigationButtonsDiv = document.getElementById('navigationButtons');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageOkButton = document.getElementById('messageOkButton');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const restartButton = document.getElementById('restartButton');
+
+        // --- Estrutura do Jogo ---
+        const rooms = {
+            livingRoom: {
+                name: 'Sala de Estar',
+                description: 'Você está na sala de estar. A TV está ligada, mas ninguém está assistindo. Um bom lugar para começar a procurar.',
+                items: [
+                    { id: 'couchCushions', name: 'Almofadas do Sofá', value: 5, suspicion: 5, found: false },
+                    { id: 'bookshelf', name: 'Estante de Livros', value: 10, suspicion: 10, found: false }
+                ],
+                exits: ['kitchen', 'bedroom']
+            },
+            kitchen: {
+                name: 'Cozinha',
+                description: 'A cozinha está cheirando a café velho. Parece que ninguém está por perto para o café da manhã.',
+                items: [
+                    { id: 'cookieJar', name: 'Pote de Biscoitos', value: 2, suspicion: 2, found: false },
+                    { id: 'fridgeMagnets', name: 'Ímãs da Geladeira', value: 7, suspicion: 8, found: false }
+                ],
+                exits: ['livingRoom', 'bathroom']
+            },
+            bedroom: {
+                name: 'Quarto Principal',
+                description: 'Seu quarto. Um lugar perigoso para procurar, mas com alto potencial.',
+                items: [
+                    { id: 'nightstandDrawer', name: 'Gaveta da Cômoda', value: 20, suspicion: 15, found: false },
+                    { id: 'underBed', name: 'Embaixo da Cama', value: 30, suspicion: 20, found: false }
+                ],
+                exits: ['livingRoom']
+            },
+            bathroom: {
+                name: 'Banheiro',
+                description: 'O banheiro. Geralmente vazio, mas o que você poderia encontrar aqui?',
+                items: [
+                    { id: 'medicineCabinet', name: 'Armário de Remédios', value: 3, suspicion: 3, found: false }
+                ],
+                exits: ['kitchen']
+            }
+        };
+
+        const familyMembers = [
+            { name: 'Esposa', location: 'livingRoom', alertness: 0.7 },
+            { name: 'Filho', location: 'bedroom', alertness: 0.5 },
+            { name: 'Filha', location: 'kitchen', alertness: 0.6 }
+        ];
+
+        // --- Funções do Jogo ---
+
+        /**
+         * Exibe uma mensagem personalizada ao usuário.
+         * @param {string} msg - A mensagem a ser exibida.
+         * @param {function} callback - Função a ser chamada quando o usuário clicar em OK.
+         */
+        function showMessage(msg, callback = () => {}) {
+            messageText.textContent = msg;
+            messageBox.style.display = 'block';
+            messageOkButton.onclick = () => {
+                messageBox.style.display = 'none';
+                callback();
+            };
+        }
+
+        /**
+         * Atualiza os displays de dinheiro e suspeita na UI.
+         */
+        function updateStatsDisplay() {
+            moneyDisplay.textContent = `R$ ${money}`;
+            suspicionDisplay.textContent = `${suspicion}%`;
+            if (suspicion >= 70) {
+                suspicionDisplay.classList.add('text-red-600');
+                suspicionDisplay.classList.remove('text-gray-900');
+            } else if (suspicion >= 40) {
+                suspicionDisplay.classList.add('text-yellow-600');
+                suspicionDisplay.classList.remove('text-red-600', 'text-gray-900');
+            } else {
+                suspicionDisplay.classList.remove('text-red-600', 'text-yellow-600');
+                suspicionDisplay.classList.add('text-gray-900');
+            }
+        }
+
+        /**
+         * Move o jogador para uma nova sala.
+         * @param {string} roomKey - A chave da sala para a qual se mover.
+         */
+        function goToRoom(roomKey) {
+            if (isQTEActive) return; // Não permitir movimento durante QTE
+            currentRoom = roomKey;
+            renderRoom();
+            moveFamilyMembers();
+        }
+
+        /**
+         * Renderiza a sala atual na UI, incluindo descrição, itens e opções de navegação.
+         */
+        function renderRoom() {
+            const room = rooms[currentRoom];
+            currentRoomDisplay.textContent = room.name;
+            roomDescription.textContent = room.description;
+
+            // Renderizar itens
+            itemActionsDiv.innerHTML = '';
+            room.items.forEach(item => {
+                if (!item.found) {
+                    const button = document.createElement('button');
+                    button.className = 'bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md';
+                    button.textContent = `Procurar em: ${item.name}`;
+                    button.onclick = () => startSearch(item);
+                    itemActionsDiv.appendChild(button);
+                }
+            });
+            if (itemActionsDiv.children.length === 0) {
+                const noItemsMessage = document.createElement('p');
+                noItemsMessage.className = 'text-gray-500 text-center col-span-full';
+                noItemsMessage.textContent = 'Parece que você já revirou tudo aqui...';
+                itemActionsDiv.appendChild(noItemsMessage);
+            }
+
+
+            // Renderizar botões de navegação
+            navigationButtonsDiv.innerHTML = '';
+            room.exits.forEach(exitRoomKey => {
+                const button = document.createElement('button');
+                button.className = 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md';
+                button.textContent = `Ir para: ${rooms[exitRoomKey].name}`;
+                button.onclick = () => goToRoom(exitRoomKey);
+                navigationButtonsDiv.appendChild(button);
+            });
+
+            updateFamilyStatus();
+            updateGameButtonsState(false); // Desabilitar botões enquanto QTE não estiver ativo
+        }
+
+        /**
+         * Inicia um Quick-Time Event (QTE) para procurar um item.
+         * @param {object} item - O item que está sendo procurado.
+         */
+        function startSearch(item) {
+            if (isQTEActive) return;
+
+            // Verificar se há um membro da família na sala
+            const familyInRoom = familyMembers.some(member => member.location === currentRoom);
+            if (familyInRoom) {
+                showMessage(`Cuidado! Parece que ${familyMembers.find(m => m.location === currentRoom).name} está por perto. Isso vai aumentar a suspeita!`, () => {
+                    initiateQTE(item);
+                });
+            } else {
+                initiateQTE(item);
+            }
+        }
+
+        /**
+         * Lógica para iniciar o QTE.
+         * @param {object} item - O item que está sendo procurado.
+         */
+        function initiateQTE(item) {
+            isQTEActive = true;
+            qteArea.classList.remove('hidden');
+            qteButton.disabled = false;
+            updateGameButtonsState(true); // Desabilitar outros botões
+            let timer = 3; // Tempo para o QTE (3 segundos)
+            qteTimerDisplay.textContent = `Tempo: ${timer}s`;
+
+            // Limpa qualquer timeout ou intervalo anterior
+            clearTimeout(qteTimeout);
+            clearInterval(qteInterval);
+
+            qteButton.onclick = () => {
+                handleQTESuccess(item);
+            };
+
+            qteInterval = setInterval(() => {
+                timer--;
+                qteTimerDisplay.textContent = `Tempo: ${timer}s`;
+                if (timer <= 0) {
+                    clearInterval(qteInterval);
+                    handleQTEFailure(item);
+                }
+            }, 1000);
+
+            qteTimeout = setTimeout(() => {
+                // Se o QTE não for concluído a tempo, handleQTEFailure será chamado pelo intervalo
+            }, timer * 1000 + 100); // Um pequeno buffer
+        }
+
+        /**
+         * Lida com o sucesso do QTE.
+         * @param {object} item - O item que foi procurado.
+         */
+        function handleQTESuccess(item) {
+            clearInterval(qteInterval);
+            clearTimeout(qteTimeout);
+            isQTEActive = false;
+            qteArea.classList.add('hidden');
+            qteButton.disabled = true;
+            updateGameButtonsState(false); // Reabilitar botões
+
+            money += item.value;
+            item.found = true; // Marca o item como encontrado
+            addSuspicion(item.suspicion / 2); // Menos suspeita se for bem-sucedido
+
+            showMessage(`Você encontrou R$ ${item.value} em ${item.name}!`, () => {
+                renderRoom();
+                updateStatsDisplay();
+                checkGameOver();
+            });
+        }
+
+        /**
+         * Lida com a falha do QTE.
+         * @param {object} item - O item que estava sendo procurado.
+         */
+        function handleQTEFailure(item) {
+            clearInterval(qteInterval);
+            clearTimeout(qteTimeout);
+            isQTEActive = false;
+            qteArea.classList.add('hidden');
+            qteButton.disabled = true;
+            updateGameButtonsState(false); // Reabilitar botões
+
+            addSuspicion(item.suspicion * 2); // Mais suspeita se falhar
+
+            showMessage(`Você falhou em procurar em ${item.name} e fez barulho!`, () => {
+                renderRoom();
+                updateStatsDisplay();
+                checkGameOver();
+            });
+        }
+
+        /**
+         * Adiciona um valor à suspeita e garante que não exceda o máximo.
+         * @param {number} amount - A quantidade de suspeita a ser adicionada.
+         */
+        function addSuspicion(amount) {
+            suspicion = Math.min(MAX_SUSPICION, suspicion + amount);
+        }
+
+        /**
+         * Move aleatoriamente os membros da família para uma nova sala.
+         */
+        function moveFamilyMembers() {
+            familyMembers.forEach(member => {
+                const currentRoomExits = rooms[member.location].exits;
+                if (currentRoomExits.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * currentRoomExits.length);
+                    member.location = currentRoomExits[randomIndex];
+                } else {
+                    // Se não houver saídas, tente mover para uma sala aleatória (menos ideal)
+                    const roomKeys = Object.keys(rooms);
+                    const randomRoomKey = roomKeys[Math.floor(Math.random() * roomKeys.length)];
+                    member.location = randomRoomKey;
+                }
+            });
+            updateFamilyStatus();
+        }
+
+        /**
+         * Atualiza o status da família na UI.
+         */
+        function updateFamilyStatus() {
+            const familyInCurrentRoom = familyMembers.filter(member => member.location === currentRoom);
+            if (familyInCurrentRoom.length > 0) {
+                const names = familyInCurrentRoom.map(m => m.name).join(', ');
+                familyStatusDisplay.textContent = `🚨 Cuidado! ${names} está(ão) na ${rooms[currentRoom].name}!`;
+                familyStatusDisplay.classList.add('bg-red-100', 'text-red-800');
+                familyStatusDisplay.classList.remove('bg-yellow-100', 'text-yellow-800');
+            } else {
+                familyStatusDisplay.textContent = 'Ninguém por perto... por enquanto.';
+                familyStatusDisplay.classList.add('bg-yellow-100', 'text-yellow-800');
+                familyStatusDisplay.classList.remove('bg-red-100', 'text-red-800');
+            }
+        }
+
+        /**
+         * Desabilita ou reabilita os botões de ação e navegação.
+         * @param {boolean} disable - True para desabilitar, false para reabilitar.
+         */
+        function updateGameButtonsState(disable) {
+            const allButtons = document.querySelectorAll('#itemActions button, #navigationButtons button');
+            allButtons.forEach(button => {
+                button.disabled = disable;
+            });
+        }
+
+        /**
+         * Verifica se o jogo deve terminar (suspeita alta).
+         */
+        function checkGameOver() {
+            if (suspicion >= MAX_SUSPICION) {
+                gameOverMessage.textContent = 'FIM DE JOGO! Sua família descobriu seu vício em apostas!';
+                gameOverScreen.style.display = 'flex';
+                // Desabilitar todas as interações do jogo
+                updateGameButtonsState(true);
+                qteButton.disabled = true;
+            }
+        }
+
+        /**
+         * Reinicia o jogo para o estado inicial.
+         */
+        function restartGame() {
+            money = 0;
+            suspicion = 0;
+            currentRoom = 'livingRoom';
+            isQTEActive = false;
+            // Resetar itens encontrados
+            Object.values(rooms).forEach(room => {
+                room.items.forEach(item => {
+                    item.found = false;
+                });
+            });
+            // Resetar posições da família (opcional, pode ser aleatório no início)
+            familyMembers[0].location = 'livingRoom';
+            familyMembers[1].location = 'bedroom';
+            familyMembers[2].location = 'kitchen';
+
+            gameOverScreen.style.display = 'none';
+            renderRoom();
+            updateStatsDisplay();
+            updateGameButtonsState(false);
+        }
+
+        // --- Event Listeners ---
+        restartButton.addEventListener('click', restartGame);
+
+        // --- Inicialização do Jogo ---
+        window.onload = function() {
+            renderRoom();
+            updateStatsDisplay();
+            // Iniciar autenticação Firebase (se necessário para futuras funcionalidades)
+            // if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+            //     const app = initializeApp(firebaseConfig);
+            //     const auth = getAuth(app);
+            //     if (initialAuthToken) {
+            //         signInWithCustomToken(auth, initialAuthToken)
+            //             .then(() => console.log('Autenticado com token personalizado'))
+            //             .catch(error => console.error('Erro na autenticação com token:', error));
+            //     } else {
+            //         signInAnonymously(auth)
+            //             .then(() => console.log('Autenticado anonimamente'))
+            //             .catch(error => console.error('Erro na autenticação anônima:', error));
+            //     }
+            // }
+        };
+    </script>
+</body>
+</html>
